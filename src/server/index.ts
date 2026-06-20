@@ -2,7 +2,7 @@ import type { Hooks, Plugin, PluginInput, PluginOptions } from "@opencode-ai/plu
 
 import { listCredentialedProviders, resolveKey } from "../shared/auth"
 import { isModalityActive, readConfig } from "../shared/config-store"
-import { loadModelsData, supportedInputModalities } from "../shared/models-data"
+import { resolveModelsData, supportedInputModalities } from "../shared/models-data"
 import { DEFAULT_PROMPTS } from "../shared/prompts"
 import { pluginConfigPath, resolvePluginConfigPathOption } from "../shared/paths"
 import {
@@ -95,11 +95,10 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
     }
   }
 
-  const getData = (): ModelsData | null => {
-    if (data === null) {
-      data = loadModelsData()
-      if (!data) log("warn", "models.json not found; capability detection disabled")
-    }
+  const getData = async (): Promise<ModelsData | null> => {
+    if (data !== null) return data
+    data = await resolveModelsData()
+    if (!data) log("warn", "models data unavailable; capability detection disabled")
     return data
   }
 
@@ -125,7 +124,7 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
       return
     }
 
-    const modelsData = getData()
+    const modelsData = await getData()
     if (!modelsData) return
 
     const supported = supportedInputModalities(modelsData, active.providerID, active.modelID)

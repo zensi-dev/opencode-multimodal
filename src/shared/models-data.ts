@@ -2,6 +2,9 @@ import fsSync from "node:fs"
 import { modelsJsonPath } from "./paths.js"
 import { isModality, type ModelEntry, type ModelsData, type Modality, type ProviderEntry } from "./types.js"
 
+const MODELS_SOURCE = process.env.OPENCODE_MODELS_URL ?? "https://models.dev"
+const FETCH_TIMEOUT_MS = 10_000
+
 export function parseModelsData(json: string): ModelsData {
   const data = JSON.parse(json)
   if (!data || typeof data !== "object") throw new Error("models.json is not a JSON object")
@@ -14,6 +17,33 @@ export function loadModelsData(path: string = modelsJsonPath()): ModelsData | nu
   } catch {
     return null
   }
+}
+
+function modelsApiUrl(source: string = MODELS_SOURCE): string {
+  return source.endsWith("/api.json") ? source : `${source}/api.json`
+}
+
+export async function fetchModelsData(
+  url: string = modelsApiUrl(),
+  init: RequestInit = {},
+): Promise<ModelsData | null> {
+  try {
+    const response = await fetch(url, {
+      ...init,
+      signal: init.signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    })
+    if (!response.ok) return null
+    return parseModelsData(await response.text())
+  } catch {
+    return null
+  }
+}
+
+export async function resolveModelsData(
+  path: string = modelsJsonPath(),
+  url: string = modelsApiUrl(),
+): Promise<ModelsData | null> {
+  return loadModelsData(path) ?? (await fetchModelsData(url))
 }
 
 export function getProvider(data: ModelsData, providerID: string): ProviderEntry | undefined {

@@ -9,10 +9,10 @@ import {
   getModel,
   listProviderModels,
   listProviders,
-  loadModelsData,
   modelDisplayName,
   modelSupportsModality,
   providerDisplayName,
+  resolveModelsData,
 } from "../shared/models-data"
 import {
   HANDLED_MODALITIES,
@@ -560,8 +560,8 @@ function ctxDescription(model: ModelEntry): string {
 
 const MULTIMODAL_COMMAND = "opencode-multimodal:open"
 
-function openConfig(api: TuiPluginApi, configPath?: string): void {
-  const data = loadModelsData()
+async function openConfig(api: TuiPluginApi, configPath?: string): Promise<void> {
+  const data = await resolveModelsData()
   if (!data) {
     api.ui.dialog.setSize("medium")
     api.ui.dialog.replace(() => (
@@ -598,9 +598,7 @@ const tui: TuiPlugin = async (api, rawOptions) => {
         category: "Multimodal",
         namespace: "palette",
         slashName: "multimodal",
-        run: () => {
-          openConfig(api, configPath)
-        },
+        run: () => openConfig(api, configPath),
       },
     ],
   })
