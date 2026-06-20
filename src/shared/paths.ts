@@ -11,18 +11,10 @@ export function home(): string {
 }
 
 export function cacheDir(): string {
-  if (process.platform === "darwin") return path.join(home(), "Library", "Caches", "opencode")
-  if (process.platform === "win32") {
-    return path.join(process.env.LOCALAPPDATA ?? path.join(home(), "AppData", "Local"), "opencode")
-  }
   return path.join(envDir("XDG_CACHE_HOME", path.join(home(), ".cache")), "opencode")
 }
 
 export function dataDir(): string {
-  if (process.platform === "darwin") return path.join(home(), "Library", "Application Support", "opencode")
-  if (process.platform === "win32") {
-    return path.join(process.env.LOCALAPPDATA ?? path.join(home(), "AppData", "Local"), "opencode")
-  }
   return path.join(envDir("XDG_DATA_HOME", path.join(home(), ".local", "share")), "opencode")
 }
 
