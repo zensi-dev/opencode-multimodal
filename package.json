@@ -1,6 +1,6 @@
 {
   "name": "opencode-multimodal",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Give every opencode model multimodal capabilities by routing attachments to a fallback multimodal model. Configure everything via the /multimodal command.",
   "type": "module",
   "packageManager": "bun@1.2.21",
