@@ -1,0 +1,120 @@
+{
+  "name": "opencode-multimodal",
+  "version": "0.1.0",
+  "description": "Give every opencode model multimodal capabilities by routing attachments to a fallback multimodal model. Configure everything via the /multimodal command.",
+  "type": "module",
+  "packageManager": "bun@1.2.21",
+  "main": "./dist/server.js",
+  "types": "./dist/server.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/server.js",
+      "types": "./dist/server.d.ts"
+    },
+    "./server": {
+      "import": "./dist/server.js",
+      "types": "./dist/server.d.ts"
+    },
+    "./tui": {
+      "import": "./src/tui/index.tsx",
+      "types": "./src/tui/index.tsx"
+    }
+  },
+  "files": [
+    "dist/server.js",
+    "dist/server.js.map",
+    "dist/server.d.ts",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "prepack": "bun run build",
+    "prepublishOnly": "bun run typecheck && bun run test"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "multimodal",
+    "vision",
+    "pdf",
+    "audio",
+    "fallback"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zensi-dev/opencode-multimodal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zensi-dev/opencode-multimodal/issues"
+  },
+  "homepage": "https://github.com/zensi-dev/opencode-multimodal#readme",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20",
+    "opencode": ">=1.17.0"
+  },
+  "dependencies": {
+    "@ai-sdk/amazon-bedrock": "^4.0.119",
+    "@ai-sdk/anthropic": "^3.0.85",
+    "@ai-sdk/azure": "^3.0.76",
+    "@ai-sdk/cohere": "^3.0.39",
+    "@ai-sdk/deepinfra": "^2.0.55",
+    "@ai-sdk/fireworks": "^2.0.57",
+    "@ai-sdk/google": "^3.0.83",
+    "@ai-sdk/google-vertex": "^4.0.147",
+    "@ai-sdk/groq": "^3.0.42",
+    "@ai-sdk/mistral": "^3.0.40",
+    "@ai-sdk/openai": "^3.0.73",
+    "@ai-sdk/openai-compatible": "^2.0.51",
+    "@ai-sdk/perplexity": "^3.0.36",
+    "@ai-sdk/togetherai": "^2.0.56",
+    "@ai-sdk/xai": "^3.0.96",
+    "@openrouter/ai-sdk-provider": "^2.9.1",
+    "ai": "^6.0.208"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.17.0",
+    "@opentui/core": ">=0.3.4",
+    "@opentui/keymap": ">=0.3.4",
+    "@opentui/solid": ">=0.3.4",
+    "solid-js": ">=1.9.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentui/keymap": {
+      "optional": true
+    },
+    "@opentui/core": {
+      "optional": true
+    },
+    "@opentui/solid": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.17.0",
+    "@opentui/core": "^0.3.4",
+    "@opentui/keymap": "^0.3.4",
+    "@opentui/solid": "^0.3.4",
+    "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "esbuild": "^0.24.0",
+    "prettier": "^3.4.0",
+    "solid-js": "^1.9.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}

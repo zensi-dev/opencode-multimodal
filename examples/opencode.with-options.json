@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    [
+      "opencode-multimodal",
+      {
+        "log_level": "info"
+      }
+    ]
+  ]
+}

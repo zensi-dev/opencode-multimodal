@@ -1,0 +1,62 @@
+{
+  "anthropic": {
+    "id": "anthropic",
+    "env": ["ANTHROPIC_API_KEY"],
+    "npm": "@ai-sdk/anthropic",
+    "name": "Anthropic",
+    "models": {
+      "claude-text-only": {
+        "id": "claude-text-only",
+        "name": "Claude Text",
+        "modalities": { "input": ["text"], "output": ["text"] },
+        "cost": { "input": 1, "output": 2 },
+        "limit": { "context": 200000, "output": 64000 }
+      },
+      "claude-vision": {
+        "id": "claude-vision",
+        "name": "Claude Vision",
+        "attachment": true,
+        "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] },
+        "cost": { "input": 3, "output": 15 },
+        "limit": { "context": 200000, "output": 64000 }
+      }
+    }
+  },
+  "openai": {
+    "id": "openai",
+    "env": ["OPENAI_API_KEY"],
+    "npm": "@ai-sdk/openai",
+    "name": "OpenAI",
+    "models": {
+      "gpt-4o": {
+        "id": "gpt-4o",
+        "name": "GPT-4o",
+        "modalities": { "input": ["text", "image", "audio"], "output": ["text"] },
+        "cost": { "input": 2.5, "output": 10 },
+        "limit": { "context": 128000, "output": 16000 }
+      },
+      "gpt-text": {
+        "id": "gpt-text",
+        "name": "GPT Text",
+        "modalities": { "input": ["text"], "output": ["text"] },
+        "cost": { "input": 0.5, "output": 1 },
+        "limit": { "context": 128000, "output": 4000 }
+      }
+    }
+  },
+  "nokey": {
+    "id": "nokey",
+    "env": ["NOKEY_API_KEY"],
+    "npm": "@ai-sdk/openai-compatible",
+    "name": "NoKey",
+    "models": {
+      "nk-vision": {
+        "id": "nk-vision",
+        "name": "NK Vision",
+        "modalities": { "input": ["text", "image"], "output": ["text"] },
+        "cost": { "input": 0, "output": 0 },
+        "limit": { "context": 32000, "output": 4000 }
+      }
+    }
+  }
+}

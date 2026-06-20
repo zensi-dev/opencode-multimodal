@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.tsbuildinfo
+*.log
+.DS_Store
+coverage/
+.claude/
+.opencode/.cache/
+.opencode/node_modules/
+.opencode/package.json
+.opencode/package-lock.json
+.opencode/bun.lock
