@@ -147,7 +147,7 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
     const plan = new Map<Modality, SelectedFallback>()
     const unresolvedModalities = new Set<Modality>()
     for (const modality of distinctModalities(hits)) {
-      const fallback = selectFallback(modelsData, config, credentialed, modality)
+      const fallback = selectFallback(modelsData, config, credentialed, modality, providerConfig)
       if (fallback) plan.set(modality, fallback)
       else unresolvedModalities.add(modality)
     }
@@ -235,12 +235,12 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
       const provider = (cfg as { provider?: Record<string, unknown> }).provider
       if (provider && typeof provider === "object") {
         for (const [id, value] of Object.entries(provider)) {
-          const optionsValue = (value as { options?: Record<string, unknown> })?.options
-          if (optionsValue && typeof optionsValue === "object") {
-            providerConfig[id] = {
-              apiKey: typeof optionsValue.apiKey === "string" ? optionsValue.apiKey : undefined,
-              baseURL: typeof optionsValue.baseURL === "string" ? optionsValue.baseURL : undefined,
-            }
+          const v = value as { npm?: string; options?: Record<string, unknown> }
+          const optionsValue = v?.options
+          providerConfig[id] = {
+            apiKey: typeof optionsValue?.apiKey === "string" ? optionsValue.apiKey : undefined,
+            baseURL: typeof optionsValue?.baseURL === "string" ? optionsValue.baseURL : undefined,
+            npm: typeof v.npm === "string" ? v.npm : undefined,
           }
         }
       }

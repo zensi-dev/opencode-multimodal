@@ -71,6 +71,11 @@ export function listCredentialedProviders(data: ModelsData, opts: ResolveKeyOpti
   for (const providerID of Object.keys(data)) {
     if (resolveKey(data, providerID, opts)) out.add(providerID)
   }
+  // Also check providers from opencode.jsonc that may not be in models.json.
+  const pc = opts.providerConfig || {}
+  for (const providerID of Object.keys(pc)) {
+    if (pc[providerID]?.apiKey) out.add(providerID)
+  }
   return out
 }
 
