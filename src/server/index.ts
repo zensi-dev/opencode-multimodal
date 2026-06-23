@@ -276,6 +276,17 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
     },
 
     "experimental.chat.messages.transform": (_input, output) => {
+      const model = (_input as { model?: { providerID?: string; modelID?: string } })?.model
+      if (model?.providerID && model?.modelID) {
+        const sessionID = (output.messages as unknown as MessageContainer[])?.[0]?.info?.sessionID
+        if (sessionID) {
+          activeModels.set(sessionID, {
+            providerID: model.providerID,
+            modelID: model.modelID,
+            resolvedAt: Date.now(),
+          })
+        }
+      }
       return runTransform(output.messages as unknown as MessageContainer[])
     },
 
