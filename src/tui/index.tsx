@@ -3,6 +3,7 @@ import type { TuiPlugin, TuiPluginApi, TuiPluginModule } from "@opencode-ai/plug
 
 import { listCredentialedProviders } from "../shared/auth"
 import { defaultConfig, normalizeConfig, readConfig, writeConfig } from "../shared/config-store"
+import { mergeProviderConfigModels, providerConfigFromOpencodeConfig } from "../shared/model-catalog"
 import { DEFAULT_PROMPTS } from "../shared/prompts"
 import { resolvePluginConfigPathOption } from "../shared/paths"
 import {
@@ -21,7 +22,6 @@ import {
   type ModelEntry,
   type ModelsData,
   type PluginConfig,
-  type ProviderConfigMap,
   type ProviderEntry,
 } from "../shared/types"
 import { clamp, isNonEmpty } from "../shared/util"
@@ -49,29 +49,15 @@ type SelectOption = {
 }
 
 function loadCtx(api: TuiPluginApi, data: ModelsData, configPath?: string): Ctx {
-  const providerConfig = providerConfigFromApi(api)
+  const providerConfig = providerConfigFromOpencodeConfig(api.state.config)
+  const catalogData = mergeProviderConfigModels(data, providerConfig)
   return {
     api,
     config: readConfig(configPath),
     configPath,
-    data,
-    credentialed: listCredentialedProviders(data, { providerConfig }),
+    data: catalogData,
+    credentialed: listCredentialedProviders(catalogData, { providerConfig }),
   }
-}
-
-function providerConfigFromApi(api: TuiPluginApi): ProviderConfigMap {
-  const out: ProviderConfigMap = {}
-  const provider = (api.state.config as { provider?: Record<string, unknown> } | undefined)?.provider
-  if (!provider || typeof provider !== "object") return out
-  for (const [id, value] of Object.entries(provider)) {
-    const options = (value as { options?: Record<string, unknown> } | undefined)?.options
-    if (!options || typeof options !== "object") continue
-    out[id] = {
-      apiKey: typeof options.apiKey === "string" ? options.apiKey : undefined,
-      baseURL: typeof options.baseURL === "string" ? options.baseURL : undefined,
-    }
-  }
-  return out
 }
 
 function persist(ctx: Ctx): void {

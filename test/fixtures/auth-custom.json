@@ -1,0 +1,3 @@
+{
+  "gateway": { "type": "api", "key": "gateway-auth-key" }
+}

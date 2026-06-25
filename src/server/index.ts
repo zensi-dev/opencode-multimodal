@@ -2,6 +2,7 @@ import type { Hooks, Plugin, PluginInput, PluginOptions } from "@opencode-ai/plu
 
 import { listCredentialedProviders, resolveKey } from "../shared/auth"
 import { isModalityActive, readConfig } from "../shared/config-store"
+import { mergeProviderConfigModels, providerConfigFromOpencodeConfig } from "../shared/model-catalog"
 import { resolveModelsData, supportedInputModalities } from "../shared/models-data"
 import { DEFAULT_PROMPTS } from "../shared/prompts"
 import { pluginConfigPath, resolvePluginConfigPathOption } from "../shared/paths"
@@ -102,6 +103,11 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
     return data
   }
 
+  const getCatalogData = async (): Promise<ModelsData | null> => {
+    const modelsData = await getData()
+    return modelsData ? mergeProviderConfigModels(modelsData, providerConfig) : null
+  }
+
   const cacheFor = (sessionID: string, ttlMs: number): DescriptionCache => {
     let cache = caches.get(sessionID)
     if (!cache || cache.size === 0) {
@@ -124,7 +130,7 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
       return
     }
 
-    const modelsData = await getData()
+    const modelsData = await getCatalogData()
     if (!modelsData) return
 
     const supported = supportedInputModalities(modelsData, active.providerID, active.modelID)
@@ -231,19 +237,7 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
 
   const hooks: Hooks = {
     config: (cfg) => {
-      providerConfig = {}
-      const provider = (cfg as { provider?: Record<string, unknown> }).provider
-      if (provider && typeof provider === "object") {
-        for (const [id, value] of Object.entries(provider)) {
-          const v = value as { npm?: string; options?: Record<string, unknown> }
-          const optionsValue = v?.options
-          providerConfig[id] = {
-            apiKey: typeof optionsValue?.apiKey === "string" ? optionsValue.apiKey : undefined,
-            baseURL: typeof optionsValue?.baseURL === "string" ? optionsValue.baseURL : undefined,
-            npm: typeof v.npm === "string" ? v.npm : undefined,
-          }
-        }
-      }
+      providerConfig = providerConfigFromOpencodeConfig(cfg)
       log("debug", "config loaded", { providers: Object.keys(providerConfig).length })
       return Promise.resolve()
     },

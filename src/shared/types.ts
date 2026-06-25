@@ -58,4 +58,12 @@ export type ProviderEntry = {
 
 export type ModelsData = Record<string, ProviderEntry>
 
-export type ProviderConfigMap = Record<string, { apiKey?: string; baseURL?: string; npm?: string }>
+export type ProviderConfig = {
+  apiKey?: string
+  baseURL?: string
+  npm?: string
+  name?: string
+  models?: Record<string, ModelEntry>
+}
+
+export type ProviderConfigMap = Record<string, ProviderConfig>

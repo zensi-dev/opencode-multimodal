@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { selectFallback } from "../src/server/fallback"
 import { normalizeConfig } from "../src/shared/config-store"
+import { mergeProviderConfigModels } from "../src/shared/model-catalog"
 import type { ModelsData, Modality, PluginConfig } from "../src/shared/types"
 
 const fixturePath = fileURLToPath(new URL("./fixtures/models.json", import.meta.url))
@@ -53,5 +54,60 @@ describe("selectFallback", () => {
     const config = configWith([{ providerID: "openai", modelID: "gpt-4o" }], "audio")
     const fallback = selectFallback(data, config, new Set(["openai"]), "audio")
     expect(fallback?.modelID).toBe("gpt-4o")
+  })
+
+  it("selects custom providers merged into the shared catalog", () => {
+    const providerConfig = {
+      gateway: {
+        apiKey: "cfg-key",
+        npm: "@ai-sdk/openai-compatible",
+        models: {
+          "gateway-vision": {
+            id: "gateway-vision",
+            modalities: { input: ["text", "image"], output: ["text"] },
+          },
+        },
+      },
+    }
+    const catalog = mergeProviderConfigModels(data, providerConfig)
+    const config = configWith([{ providerID: "gateway", modelID: "gateway-vision" }])
+
+    const fallback = selectFallback(catalog, config, new Set(["gateway"]), "image", providerConfig)
+
+    expect(fallback).toEqual({
+      providerID: "gateway",
+      modelID: "gateway-vision",
+      npm: "@ai-sdk/openai-compatible",
+      env: [],
+    })
+  })
+
+  it("supports config-only custom providers for hand-edited chains", () => {
+    const providerConfig = { gateway: { apiKey: "cfg-key", npm: "@ai-sdk/openai-compatible" } }
+    const config = configWith([{ providerID: "gateway", modelID: "gateway-vision" }])
+
+    const fallback = selectFallback(data, config, new Set(["gateway"]), "image", providerConfig)
+
+    expect(fallback?.providerID).toBe("gateway")
+    expect(fallback?.npm).toBe("@ai-sdk/openai-compatible")
+  })
+
+  it("rejects custom providers with unsupported packages", () => {
+    const providerConfig = {
+      gateway: {
+        apiKey: "cfg-key",
+        npm: "@ai-sdk/not-supported",
+        models: {
+          "gateway-vision": {
+            id: "gateway-vision",
+            modalities: { input: ["text", "image"], output: ["text"] },
+          },
+        },
+      },
+    }
+    const catalog = mergeProviderConfigModels(data, providerConfig)
+    const config = configWith([{ providerID: "gateway", modelID: "gateway-vision" }])
+
+    expect(selectFallback(catalog, config, new Set(["gateway"]), "image", providerConfig)).toBeNull()
   })
 })
