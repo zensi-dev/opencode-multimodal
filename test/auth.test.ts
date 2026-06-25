@@ -6,6 +6,7 @@ import type { ModelsData } from "../src/shared/types"
 
 const fixturePath = fileURLToPath(new URL("./fixtures/models.json", import.meta.url))
 const authPath = fileURLToPath(new URL("./fixtures/auth.json", import.meta.url))
+const customAuthPath = fileURLToPath(new URL("./fixtures/auth-custom.json", import.meta.url))
 let data: ModelsData
 let envBackup: string | undefined
 let awsSecretBackup: string | undefined
@@ -67,6 +68,40 @@ describe("credentialed sets", () => {
     expect(set.has("openai")).toBe(true)
     expect(set.has("anthropic")).toBe(true)
     expect(set.has("nokey")).toBe(true)
+  })
+
+  it("lists custom providers credentialed by provider config", () => {
+    const set = listCredentialedProviders(data, {
+      authPath,
+      providerConfig: {
+        gateway: { apiKey: "cfg-key", baseURL: "https://gateway.example.com/v1" },
+      },
+    })
+
+    expect(set.has("gateway")).toBe(true)
+  })
+
+  it("lists custom providers credentialed by auth.json", () => {
+    const providerConfig = {
+      gateway: { baseURL: "https://gateway.example.com/v1", npm: "@ai-sdk/openai-compatible" },
+    }
+
+    const set = listCredentialedProviders(data, { authPath: customAuthPath, providerConfig })
+
+    expect(set.has("gateway")).toBe(true)
+    expect(resolveKey(data, "gateway", { authPath: customAuthPath, providerConfig })).toEqual({
+      key: "gateway-auth-key",
+      baseURL: "https://gateway.example.com/v1",
+    })
+  })
+
+  it("does not treat blank custom provider keys as credentialed", () => {
+    const set = listCredentialedProviders(data, {
+      authPath,
+      providerConfig: { gateway: { apiKey: "  " } },
+    })
+
+    expect(set.has("gateway")).toBe(false)
   })
 
   it("isCredentialed matches resolveKey", () => {

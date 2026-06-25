@@ -68,7 +68,8 @@ export function resolveKey(
 
 export function listCredentialedProviders(data: ModelsData, opts: ResolveKeyOptions = {}): Set<string> {
   const out = new Set<string>()
-  for (const providerID of Object.keys(data)) {
+  const providerIDs = new Set([...Object.keys(data), ...Object.keys(opts.providerConfig ?? {})])
+  for (const providerID of providerIDs) {
     if (resolveKey(data, providerID, opts)) out.add(providerID)
   }
   return out

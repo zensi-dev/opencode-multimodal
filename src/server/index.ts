@@ -2,6 +2,7 @@ import type { Hooks, Plugin, PluginInput, PluginOptions } from "@opencode-ai/plu
 
 import { listCredentialedProviders, resolveKey } from "../shared/auth"
 import { isModalityActive, readConfig } from "../shared/config-store"
+import { mergeProviderConfigModels, providerConfigFromOpencodeConfig } from "../shared/model-catalog"
 import { resolveModelsData, supportedInputModalities } from "../shared/models-data"
 import { DEFAULT_PROMPTS } from "../shared/prompts"
 import { pluginConfigPath, resolvePluginConfigPathOption } from "../shared/paths"
@@ -102,6 +103,11 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
     return data
   }
 
+  const getCatalogData = async (): Promise<ModelsData | null> => {
+    const modelsData = await getData()
+    return modelsData ? mergeProviderConfigModels(modelsData, providerConfig) : null
+  }
+
   const cacheFor = (sessionID: string, ttlMs: number): DescriptionCache => {
     let cache = caches.get(sessionID)
     if (!cache || cache.size === 0) {
@@ -124,7 +130,7 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
       return
     }
 
-    const modelsData = await getData()
+    const modelsData = await getCatalogData()
     if (!modelsData) return
 
     const supported = supportedInputModalities(modelsData, active.providerID, active.modelID)
@@ -147,7 +153,7 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
     const plan = new Map<Modality, SelectedFallback>()
     const unresolvedModalities = new Set<Modality>()
     for (const modality of distinctModalities(hits)) {
-      const fallback = selectFallback(modelsData, config, credentialed, modality)
+      const fallback = selectFallback(modelsData, config, credentialed, modality, providerConfig)
       if (fallback) plan.set(modality, fallback)
       else unresolvedModalities.add(modality)
     }
@@ -231,19 +237,7 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
 
   const hooks: Hooks = {
     config: (cfg) => {
-      providerConfig = {}
-      const provider = (cfg as { provider?: Record<string, unknown> }).provider
-      if (provider && typeof provider === "object") {
-        for (const [id, value] of Object.entries(provider)) {
-          const optionsValue = (value as { options?: Record<string, unknown> })?.options
-          if (optionsValue && typeof optionsValue === "object") {
-            providerConfig[id] = {
-              apiKey: typeof optionsValue.apiKey === "string" ? optionsValue.apiKey : undefined,
-              baseURL: typeof optionsValue.baseURL === "string" ? optionsValue.baseURL : undefined,
-            }
-          }
-        }
-      }
+      providerConfig = providerConfigFromOpencodeConfig(cfg)
       log("debug", "config loaded", { providers: Object.keys(providerConfig).length })
       return Promise.resolve()
     },
@@ -276,6 +270,17 @@ const server: Plugin = async (input: PluginInput, rawOptions?: PluginOptions) =>
     },
 
     "experimental.chat.messages.transform": (_input, output) => {
+      const model = (_input as { model?: { providerID?: string; modelID?: string } })?.model
+      if (model?.providerID && model?.modelID) {
+        const sessionID = (output.messages as unknown as MessageContainer[])?.[0]?.info?.sessionID
+        if (sessionID) {
+          activeModels.set(sessionID, {
+            providerID: model.providerID,
+            modelID: model.modelID,
+            resolvedAt: Date.now(),
+          })
+        }
+      }
       return runTransform(output.messages as unknown as MessageContainer[])
     },
 
