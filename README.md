@@ -45,6 +45,7 @@ You attach a screenshot while using a text-only model
 - Uses your existing OpenCode providers and credentials from `/connect`, `auth.json`, provider config, or environment variables.
 - Provides a `/multimodal` configuration UI inside OpenCode.
 - Lets you choose fallback models separately for each modality.
+- Supports custom providers configured in OpenCode when they declare model metadata and use a bundled provider package.
 - Supports ordered fallback chains, so the first available credentialed model is used.
 - Replaces unsupported attachments with text extracted by the auxiliary model before OpenCode's provider request is built.
 - Caches attachment analysis within a session to avoid repeated fallback calls.
@@ -104,7 +105,7 @@ The UI lets you configure:
 
 - Master enable or disable switch.
 - Per-modality fallback chains for image, PDF, and audio.
-- Provider and model selection from OpenCode's local models database.
+- Provider and model selection from OpenCode's local models database and custom provider config.
 - Credential-aware model suggestions.
 - Per-modality analysis prompts.
 - Concurrency, timeout, cache TTL, and missing-fallback toast behavior.
@@ -129,6 +130,43 @@ Recommended setup:
 ```
 
 The UI prioritizes credentialed providers so you can quickly select models that are ready to use.
+
+## Custom Providers
+
+Custom providers declared in OpenCode config are available in `/multimodal` when they include model metadata. The provider's `npm` package must be one of the packages bundled by this plugin. If `npm` is omitted for a custom provider, the plugin defaults to `@ai-sdk/openai-compatible`.
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "my-gateway": {
+      "name": "My Gateway",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "https://gateway.example.com/v1",
+        "apiKey": "sk-...",
+      },
+      "models": {
+        "gpt-4o": {
+          "name": "GPT-4o via Gateway",
+          "modalities": {
+            "input": ["text", "image", "pdf", "audio"],
+            "output": ["text"],
+          },
+          "limit": {
+            "context": 128000,
+            "output": 4096,
+          },
+        },
+      },
+    },
+  },
+}
+```
+
+The `modalities.input` list controls where the model appears in `/multimodal`. For example, a model with `"image"` appears in the image fallback picker.
+
+Supported custom provider packages are the provider packages listed in `package.json` dependencies, including Anthropic, OpenAI, OpenAI-compatible, Google, Google Vertex, Mistral, Cohere, Groq, xAI, Amazon Bedrock, Azure, DeepInfra, Fireworks, TogetherAI, Perplexity, and OpenRouter.
 
 ## Supported Modalities
 
@@ -176,7 +214,7 @@ Plugin settings are stored outside your project by default:
 
 Shared logic lives in `src/shared`, including config storage, auth lookup, model metadata, provider package mapping, prompts, and utility functions.
 
-Runtime model capability data comes from OpenCode's local `models.dev` cache at `~/.cache/opencode/models.json` on Linux, with equivalent cache locations on macOS and Windows.
+Runtime model capability data comes from OpenCode's local `models.dev` cache at `~/.cache/opencode/models.json` on Linux, with equivalent cache locations on macOS and Windows. Custom provider models declared in OpenCode config are merged into that catalog before the server and TUI make capability or picker decisions.
 
 ## Limitations
 
